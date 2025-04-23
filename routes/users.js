@@ -9,8 +9,9 @@ const uniqid = require("uniqid");
 
 /* ACCOUNT CREATION */
 router.post("/signup", (req, res) => {
-  if (!checkBody(req.body, ["email", "username", "password"])) {
+  if (!checkBody(req.body, ["email", "password"])) {
     res.json({ result: false, error: "Missing or empty fields" });
+    console.log("champ vide");
     return;
   }
 
@@ -18,11 +19,8 @@ router.post("/signup", (req, res) => {
 
   // Check if the user has not already been registered
   User.findOne({
-    // Check if the username OR the email already exist
-    $or: [
-      { username: { $regex: new RegExp(req.body.username, "i") } },
-      { email: { $regex: new RegExp(req.body.email, "i") } },
-    ],
+    // Check if the email is already used
+    $or: [{ email: { $regex: new RegExp(req.body.email, "i") } }],
   }).then((data) => {
     if (data === null) {
       const hash = bcrypt.hashSync(req.body.password, 10);
@@ -61,7 +59,6 @@ router.post("/signin", (req, res) => {
           res.json({
             result: true,
             token: data.token,
-            username: data.username,
             userPreferences: data.userPreferences,
           });
         } else {
