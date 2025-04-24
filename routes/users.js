@@ -11,7 +11,6 @@ const uniqid = require("uniqid");
 router.post("/signup", (req, res) => {
   if (!checkBody(req.body, ["email", "password"])) {
     res.json({ result: false, error: "Missing or empty fields" });
-    console.log("champ vide");
     return;
   }
 
