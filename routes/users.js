@@ -30,6 +30,7 @@ router.post("/signup", (req, res) => {
         email: req.body.email,
         password: hash,
         token: uid2(32),
+        points: 0,
       });
 
       newUser.save().then((newUser) => {
