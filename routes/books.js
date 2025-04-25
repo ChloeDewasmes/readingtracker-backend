@@ -8,14 +8,7 @@ const { checkBody } = require("../modules/checkBody");
 /* ADD A BOOK */
 router.post("/", async (req, res) => {
   if (
-    !checkBody(req.body, [
-      "title",
-      "author",
-      "genre",
-      "totalPage",
-      "pagesRead",
-      "token",
-    ])
+    !checkBody(req.body, ["title", "author", "genre", "totalPage", "pagesRead"])
   ) {
     res.json({ result: false, error: "Missing or empty fields" });
     return;
@@ -72,3 +65,5 @@ router.post("/", async (req, res) => {
     res.json({ result: false, error: "An error occurred" });
   }
 });
+
+module.exports = router;
