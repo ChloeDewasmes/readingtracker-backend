@@ -69,4 +69,72 @@ router.post("/signin", (req, res) => {
   );
 });
 
+/* GET USER INFORMATIONS */
+router.get("/:token", (req, res) => {
+  User.findOne({ token: req.params.token }).then((user) => {
+    if (!user) return res.json({ result: false, error: "User not found" });
+
+    res.json({
+      result: true,
+      data: {
+        points: user.points,
+        badges: user.badges,
+        followedBooks: user.followedBooks,
+        readBooks: user.readBooks,
+      },
+    });
+  });
+});
+
+/* GET USER EMAIL */
+router.get("/email/:token", (req, res) => {
+  User.findOne({ token: req.params.token }).then((user) => {
+    if (!user) return res.json({ result: false, error: "User not found" });
+
+    res.json({
+      result: true,
+      email: user.email,
+    });
+  });
+});
+
+/* UPDATE USER EMAIL */
+router.put("/email/:token", (req, res) => {
+  const { newEmail } = req.body;
+
+  if (!newEmail) {
+    return res.json({ result: false, error: "New email is required" });
+  }
+
+  User.findOne({ token: req.params.token })
+    .then((user) => {
+      if (!user) {
+        return res.json({ result: false, error: "User not found" });
+      }
+
+      // Check if the email is already used
+      return User.findOne({
+        email: { $regex: new RegExp(`^${newEmail}$`, "i") },
+        _id: { $ne: user._id }, // different user
+      }).then((existingUser) => {
+        if (existingUser) {
+          return res.json({ result: false, error: "Email already in use" });
+        }
+
+        // Update email
+        return User.findByIdAndUpdate(
+          user._id,
+          { email: newEmail },
+          { new: true }
+        ).then((updatedUser) => {
+          res.json({ result: true, email: updatedUser.email });
+        });
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.json({ result: false, error: "An error occurred" });
+    });
+});
+
 module.exports = router;
