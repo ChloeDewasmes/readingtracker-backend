@@ -42,7 +42,7 @@ router.post("/signup", (req, res) => {
   });
 });
 
-/* CONNEXION */
+/* LOGIN */
 router.post("/signin", (req, res) => {
   if (!checkBody(req.body, ["email", "password"])) {
     res.json({ result: false, error: "Missing or empty fields" });
@@ -67,6 +67,31 @@ router.post("/signin", (req, res) => {
       }
     }
   );
+});
+
+/* DELETE ACCOUNT */
+router.delete("/deleteAccount/:token", (req, res) => {
+  User.findOne({ token: req.params.token })
+    .then((user) => {
+      if (!user) {
+        res.json({ result: false, error: "User not found" });
+        return Promise.reject("NoUserFound"); // <- bloquer proprement ici
+      }
+      return User.deleteOne({ _id: user._id });
+    })
+    .then(() => {
+      res.json({ result: true, message: "Account successfully deleted" });
+    })
+    .catch((error) => {
+      if (error !== "NoUserFound") {
+        // <- on ignore l'erreur qu'on a volontairement lancée
+        console.error(error);
+        res.json({
+          result: false,
+          error: "An error occurred while deleting account",
+        });
+      }
+    });
 });
 
 /* GET USER INFORMATIONS */
