@@ -10,7 +10,7 @@ const uniqid = require("uniqid");
 /* ACCOUNT CREATION */
 router.post("/signup", (req, res) => {
   if (!checkBody(req.body, ["email", "password"])) {
-    res.json({ result: false, error: "Missing or empty fields" });
+    res.json({ result: false, error: "MISSING_OR_EMPTY_FIELD" });
     return;
   }
 
@@ -37,7 +37,7 @@ router.post("/signup", (req, res) => {
       });
     } else {
       // User already exists in database
-      res.json({ result: false, error: "User already exists" });
+      res.json({ result: false, error: "USER_ALREADY_EXISTS" });
     }
   });
 });
@@ -45,14 +45,14 @@ router.post("/signup", (req, res) => {
 /* LOGIN */
 router.post("/signin", (req, res) => {
   if (!checkBody(req.body, ["email", "password"])) {
-    res.json({ result: false, error: "Missing or empty fields" });
+    res.json({ result: false, error: "MISSING_OR_EMPTY_FIELD" });
     return;
   }
 
   User.findOne({ email: { $regex: new RegExp(req.body.email, "i") } }).then(
     (data) => {
       if (data === null) {
-        res.json({ result: false, error: "User not found" });
+        res.json({ result: false, error: "USER_NOT_FOUND" });
         return;
       } else {
         if (data && bcrypt.compareSync(req.body.password, data.password)) {
@@ -62,7 +62,7 @@ router.post("/signin", (req, res) => {
             userPreferences: data.userPreferences,
           });
         } else {
-          res.json({ result: false, error: "Wrong password" });
+          res.json({ result: false, error: "WRONG_PASSWORD" });
         }
       }
     }
@@ -74,7 +74,7 @@ router.delete("/deleteAccount/:token", (req, res) => {
   User.findOne({ token: req.params.token })
     .then((user) => {
       if (!user) {
-        res.json({ result: false, error: "User not found" });
+        res.json({ result: false, error: "USER_NOT_FOUND" });
         return Promise.reject("NoUserFound"); // <- bloquer proprement ici
       }
       return User.deleteOne({ _id: user._id });
@@ -97,7 +97,7 @@ router.delete("/deleteAccount/:token", (req, res) => {
 /* GET USER INFORMATIONS */
 router.get("/:token", (req, res) => {
   User.findOne({ token: req.params.token }).then((user) => {
-    if (!user) return res.json({ result: false, error: "User not found" });
+    if (!user) return res.json({ result: false, error: "USER_NOT_FOUND" });
 
     res.json({
       result: true,
@@ -114,7 +114,7 @@ router.get("/:token", (req, res) => {
 /* GET USER EMAIL */
 router.get("/email/:token", (req, res) => {
   User.findOne({ token: req.params.token }).then((user) => {
-    if (!user) return res.json({ result: false, error: "User not found" });
+    if (!user) return res.json({ result: false, error: "USER_NOT_FOUND" });
 
     res.json({
       result: true,
@@ -128,13 +128,13 @@ router.put("/email/:token", (req, res) => {
   const { newEmail } = req.body;
 
   if (!newEmail) {
-    return res.json({ result: false, error: "New email is required" });
+    return res.json({ result: false, error: "NEW_EMAIL_IS_REQUIRED" });
   }
 
   User.findOne({ token: req.params.token })
     .then((user) => {
       if (!user) {
-        return res.json({ result: false, error: "User not found" });
+        return res.json({ result: false, error: "USER_NOT_FOUND" });
       }
 
       // Check if the email is already used
@@ -143,7 +143,7 @@ router.put("/email/:token", (req, res) => {
         _id: { $ne: user._id }, // different user
       }).then((existingUser) => {
         if (existingUser) {
-          return res.json({ result: false, error: "Email already in use" });
+          return res.json({ result: false, error: "EMAIL_ALREADY_IN_USE" });
         }
 
         // Update email
@@ -159,6 +159,59 @@ router.put("/email/:token", (req, res) => {
     .catch((error) => {
       console.error(error);
       res.json({ result: false, error: "An error occurred" });
+    });
+});
+
+/* UPDATE USER PASSWORD */
+router.put("/password/:token", (req, res) => {
+  if (!checkBody(req.body, ["oldPassword", "newPassword", "confirmPassword"])) {
+    return res.json({ result: false, error: "MISSING_OR_EMPTY_FIELD" });
+  }
+
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+
+  // Check if new passwords are matching
+  if (newPassword !== confirmPassword) {
+    return res.json({
+      result: false,
+      error: "NEW_PASSWORDS_DO_NOT_MATCH",
+    });
+  }
+
+  if (!newPassword) {
+    return res.json({ result: false, error: "NEW_PASSWORD_IS_REQUIRED" });
+  }
+
+  User.findOne({ token: req.params.token })
+    .then((user) => {
+      if (!user) {
+        return res.json({ result: false, error: "USER_NOT_FOUND" });
+      }
+
+      // Check if old password is correct
+      const isOldPasswordValid = bcrypt.compareSync(oldPassword, user.password);
+      if (!isOldPasswordValid) {
+        return res.json({ result: false, error: "OLD_PASSWORD_INCORRECT" });
+      }
+
+      // If old password is correct, hash the new one
+      const hash = bcrypt.hashSync(newPassword, 10);
+
+      // Update password in database
+      return User.findByIdAndUpdate(
+        user._id,
+        { password: hash },
+        { new: true }
+      ).then((updatedUser) => {
+        res.json({ result: true, message: "Password successfully updated" });
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.json({
+        result: false,
+        error: "An error occurred while updating the password",
+      });
     });
 });
 
