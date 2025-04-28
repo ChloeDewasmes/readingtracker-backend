@@ -8,13 +8,19 @@ const { checkBody } = require("../modules/checkBody");
 /* ADD A BOOK */
 router.post("/", async (req, res) => {
   if (
-    !checkBody(req.body, ["title", "author", "genre", "totalPage", "pagesRead"])
+    !checkBody(req.body, [
+      "title",
+      "author",
+      "genre",
+      "totalPages",
+      "pagesRead",
+    ])
   ) {
-    res.json({ result: false, error: "Missing or empty fields" });
+    res.json({ result: false, error: "MISSING_OR_EMPTY_FIELD" });
     return;
   }
 
-  const { title, author, genre, totalPage, pagesRead, token } = req.body;
+  const { title, author, genre, totalPages, pagesRead, token } = req.body;
   const createdAt = new Date();
 
   // Check if the book has not already been registered
@@ -23,7 +29,7 @@ router.post("/", async (req, res) => {
       title: { $regex: title, $options: "i" },
       author: { $regex: author, $options: "i" },
       genre,
-      totalPage,
+      totalPages,
     });
 
     // If it doesn't exit --> create new book
@@ -33,7 +39,7 @@ router.post("/", async (req, res) => {
         title,
         author,
         genre,
-        totalPage,
+        totalPages,
       }).save();
     }
 
@@ -41,7 +47,7 @@ router.post("/", async (req, res) => {
     const user = await User.findOne({ token });
 
     if (!user) {
-      return res.json({ result: false, error: "User not found" });
+      return res.json({ result: false, error: "USER_NOT_FOUND" });
     }
 
     // Check if the user already has this book in his library
@@ -64,6 +70,25 @@ router.post("/", async (req, res) => {
     console.error(error);
     res.json({ result: false, error: "An error occurred" });
   }
+});
+
+/* GET BOOK INFO FOR USER */
+router.get("/followedBook/:bookId", (req, res) => {
+  Book.findById(req.params.bookId)
+    .then((book) => {
+      if (!book) return res.json({ result: false, error: "BOOK_NOT_FOUND" });
+      console.log("heyyy", book);
+
+      res.json({
+        result: true,
+        title: book.title,
+        totalPages: book.totalPages,
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.json({ result: false, error: "An error occurred" });
+    });
 });
 
 module.exports = router;

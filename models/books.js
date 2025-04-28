@@ -5,7 +5,7 @@ const bookSchema = mongoose.Schema({
   title: String,
   author: String,
   genre: String,
-  totalPage: Number,
+  totalPages: Number,
 });
 
 const Book = mongoose.model("books", bookSchema);
