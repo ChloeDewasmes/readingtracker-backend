@@ -292,4 +292,58 @@ router.put("/updatePagesRead/:token/:bookId", (req, res) => {
     });
 });
 
+/* MARK AS UNREAD */
+router.put("/undoRead/:token/:bookId", (req, res) => {
+  const { bookId, token } = req.params;
+
+  User.findOne({ token: token })
+    .then((user) => {
+      if (!user) {
+        return res.json({ result: false, error: "USER_NOT_FOUND" });
+      }
+
+      const bookToUpdateIndex = user.readBooks.findIndex(
+        (book) => book.bookId.toString() === bookId
+      );
+
+      if (bookToUpdateIndex === -1) {
+        return res.json({
+          result: false,
+          error: "BOOK_NOT_FOUND_IN_READ",
+        });
+      }
+
+      // Remove the book from readBooks and move it back to followedBooks
+      const removedBook = user.readBooks.splice(bookToUpdateIndex, 1)[0];
+
+      user.followedBooks.push({
+        bookId: removedBook.bookId,
+        pagesRead: 0,
+      });
+
+      user
+        .save()
+        .then(() => {
+          res.json({
+            result: true,
+            message: "Book successfully moved back to followed books.",
+          });
+        })
+        .catch((err) => {
+          console.log("Save error:", err);
+          res.json({
+            result: false,
+            error: "ERROR_SAVING_USER",
+          });
+        });
+    })
+    .catch((err) => {
+      console.log("Find user error:", err);
+      res.json({
+        result: false,
+        error: "ERROR_FINDING_USER",
+      });
+    });
+});
+
 module.exports = router;
