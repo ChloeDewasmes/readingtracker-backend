@@ -77,11 +77,11 @@ router.get("/followedBook/:bookId", (req, res) => {
   Book.findById(req.params.bookId)
     .then((book) => {
       if (!book) return res.json({ result: false, error: "BOOK_NOT_FOUND" });
-      console.log("heyyy", book);
 
       res.json({
         result: true,
         title: book.title,
+        author: book.author,
         totalPages: book.totalPages,
       });
     })

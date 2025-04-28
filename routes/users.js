@@ -215,4 +215,57 @@ router.put("/password/:token", (req, res) => {
     });
 });
 
+/* UPDATE PAGES READ FOR A FOLLOWED BOOK */
+router.put("/updatePagesRead/:token/:bookId", (req, res) => {
+  const { updatedPagesRead, totalPages } = req.body;
+
+  if (updatedPagesRead === undefined) {
+    return res.json({ result: false, error: "Missing updated pages read" });
+  }
+
+  User.findOne({ token: req.params.token })
+    .then((user) => {
+      if (!user) {
+        return res.json({ result: false, error: "USER_NOT_FOUND" });
+      }
+
+      // Find book in array followedBooks
+      const bookToUpdate = user.followedBooks.find(
+        (book) => book.bookId.toString() === req.params.bookId
+      );
+
+      if (!bookToUpdate) {
+        return res.json({
+          result: false,
+          error: "BOOK_NOT_FOUND_IN_FOLLOWED",
+        });
+      }
+
+      if (updatedPagesRead == totalPages) {
+        // Remove from followed books and add to read book
+        user.followedBooks = user.followedBooks.filter(
+          (book) => !book.bookId.equals(req.params.bookId)
+        );
+        user.readBooks.push({
+          bookId: req.params.bookId,
+          finishedAt: new Date(),
+        });
+      } else {
+        // Book is not finished, update number of read pages
+        bookToUpdate.pagesRead = updatedPagesRead;
+      }
+
+      return user.save().then(() => {
+        res.json({ result: true, message: "Progression updated successfully" });
+      });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.json({
+        result: false,
+        error: "An error occurred while updating progression",
+      });
+    });
+});
+
 module.exports = router;
