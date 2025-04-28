@@ -6,6 +6,7 @@ const { checkBody } = require("../modules/checkBody");
 const bcrypt = require("bcrypt");
 const uid2 = require("uid2");
 const uniqid = require("uniqid");
+const { checkAndGrantBadges } = require("../controllers/checkAndGrantBadges");
 
 /* ACCOUNT CREATION */
 router.post("/signup", (req, res) => {
@@ -241,6 +242,7 @@ router.put("/updatePagesRead/:token/:bookId", (req, res) => {
         });
       }
 
+      // WHEN BOOK IS FINISHED :
       if (updatedPagesRead == totalPages) {
         // Remove from followed books and add to read book
         user.followedBooks = user.followedBooks.filter(
@@ -259,14 +261,27 @@ router.put("/updatePagesRead/:token/:bookId", (req, res) => {
         } else {
           user.points += 30;
         }
+
+        // Attribute a badge if requirements are meet
+        return checkAndGrantBadges(user).then(() => {
+          return user.save().then(() => {
+            res.json({
+              result: true,
+              message: "Progression updated successfully",
+            });
+          });
+        });
       } else {
         // Book is not finished, update number of read pages
         bookToUpdate.pagesRead = updatedPagesRead;
-      }
 
-      return user.save().then(() => {
-        res.json({ result: true, message: "Progression updated successfully" });
-      });
+        return user.save().then(() => {
+          res.json({
+            result: true,
+            message: "Progression updated successfully",
+          });
+        });
+      }
     })
     .catch((error) => {
       console.error(error);
