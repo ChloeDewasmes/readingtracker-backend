@@ -250,6 +250,15 @@ router.put("/updatePagesRead/:token/:bookId", (req, res) => {
           bookId: req.params.bookId,
           finishedAt: new Date(),
         });
+
+        // Add points to user according to number of pages
+        if (totalPages < 150) {
+          user.points += 10;
+        } else if (totalPages <= 300) {
+          user.points += 20;
+        } else {
+          user.points += 30;
+        }
       } else {
         // Book is not finished, update number of read pages
         bookToUpdate.pagesRead = updatedPagesRead;

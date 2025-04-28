@@ -73,7 +73,7 @@ router.post("/", async (req, res) => {
 });
 
 /* GET BOOK INFO FOR USER */
-router.get("/followedBook/:bookId", (req, res) => {
+router.get("/:bookId", (req, res) => {
   Book.findById(req.params.bookId)
     .then((book) => {
       if (!book) return res.json({ result: false, error: "BOOK_NOT_FOUND" });
