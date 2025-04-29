@@ -1,4 +1,4 @@
-# API - Book Tracking Backend
+# Book Tracking Backend
 
 ## Prérequis
 
