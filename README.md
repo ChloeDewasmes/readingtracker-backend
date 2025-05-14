@@ -3,7 +3,7 @@
 ## Prérequis
 
 - Node.js
-- MongoDB (ou autre base de données si nécessaire)
+- MongoDB
 - Yarn
 
 ## Installation
